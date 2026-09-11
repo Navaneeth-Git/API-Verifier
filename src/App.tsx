@@ -1,21 +1,53 @@
 import { useState } from 'react'
-import { ArrowUpRight, Check, CircleAlert, Eye, EyeOff, KeyRound, LoaderCircle, RotateCcw, ShieldCheck, Sparkles, Terminal } from 'lucide-react'
+import { ArrowUpRight, Check, CircleAlert, Clipboard, Eye, EyeOff, KeyRound, LoaderCircle, RotateCcw, Search, ShieldCheck, Sparkles, Terminal } from 'lucide-react'
 import './App.css'
 
-type ProviderId = 'openai' | 'anthropic' | 'google' | 'mistral' | 'groq'
+type ProviderId = 'openai' | 'anthropic' | 'google' | 'mistral' | 'groq' | 'cohere' | 'perplexity' | 'xai' | 'deepseek' | 'openrouter' | 'huggingface'
 type Result = { status: 'valid' | 'invalid' | 'error'; message: string; latency?: number }
 const providers: { id: ProviderId; name: string; mark: string; tone: string; placeholder: string }[] = [
-  { id: 'openai', name: 'OpenAI', mark: 'O', tone: 'mint', placeholder: 'sk-proj-...' }, { id: 'anthropic', name: 'Anthropic', mark: 'A', tone: 'coral', placeholder: 'sk-ant-...' }, { id: 'google', name: 'Google AI', mark: 'G', tone: 'blue', placeholder: 'AIza...' }, { id: 'mistral', name: 'Mistral', mark: 'M', tone: 'orange', placeholder: 'xxxxxxxx...' }, { id: 'groq', name: 'Groq', mark: 'G', tone: 'violet', placeholder: 'gsk_...' },
+  { id: 'openai', name: 'OpenAI', mark: 'O', tone: 'mint', placeholder: 'sk-proj-...' }, { id: 'anthropic', name: 'Anthropic', mark: 'A', tone: 'coral', placeholder: 'sk-ant-...' }, { id: 'google', name: 'Google AI', mark: 'G', tone: 'blue', placeholder: 'AIza...' }, { id: 'mistral', name: 'Mistral', mark: 'M', tone: 'orange', placeholder: 'xxxxxxxx...' }, { id: 'groq', name: 'Groq', mark: 'G', tone: 'violet', placeholder: 'gsk_...' }, { id: 'cohere', name: 'Cohere', mark: 'C', tone: 'teal', placeholder: 'your-cohere-key...' }, { id: 'perplexity', name: 'Perplexity', mark: 'P', tone: 'navy', placeholder: 'pplx-...' }, { id: 'xai', name: 'xAI', mark: 'x', tone: 'black', placeholder: 'xai-...' }, { id: 'deepseek', name: 'DeepSeek', mark: 'D', tone: 'cyan', placeholder: 'sk-...' }, { id: 'openrouter', name: 'OpenRouter', mark: 'R', tone: 'rose', placeholder: 'sk-or-v1-...' }, { id: 'huggingface', name: 'Hugging Face', mark: 'H', tone: 'gold', placeholder: 'hf_...' },
 ]
+
+const detectProvider = (value: string): ProviderId | null => {
+  const key = value.trim()
+  if (key.startsWith('sk-ant-')) return 'anthropic'
+  if (key.startsWith('AIza')) return 'google'
+  if (key.startsWith('gsk_')) return 'groq'
+  if (key.startsWith('pplx-')) return 'perplexity'
+  if (key.startsWith('xai-')) return 'xai'
+  if (key.startsWith('sk-or-v1-')) return 'openrouter'
+  if (key.startsWith('hf_')) return 'huggingface'
+  if (key.startsWith('sk-')) return 'openai'
+  return null
+}
 
 function App() {
   const [provider, setProvider] = useState<ProviderId>('openai')
+  const [providerMode, setProviderMode] = useState<'auto' | 'manual'>('auto')
+  const [providerSearch, setProviderSearch] = useState('')
+  const [pasteMessage, setPasteMessage] = useState('')
   const [key, setKey] = useState('')
   const [showKey, setShowKey] = useState(false)
   const [result, setResult] = useState<Result | null>(null)
   const [isChecking, setIsChecking] = useState(false)
   const [logs, setLogs] = useState<string[]>(['keycheck console ready', 'waiting for a credential...'])
   const selectedProvider = providers.find((item) => item.id === provider)!
+  const detectedProvider = detectProvider(key)
+  const visibleProviders = providers.filter((item) => item.name.toLowerCase().includes(providerSearch.toLowerCase()))
+
+  async function pasteKey() {
+    try {
+      const pastedKey = await navigator.clipboard.readText()
+      setKey(pastedKey)
+      setProviderMode('auto')
+      setProvider(detectProvider(pastedKey) ?? 'openai')
+      setPasteMessage('Pasted')
+      window.setTimeout(() => setPasteMessage(''), 1500)
+    } catch {
+      setPasteMessage('Paste unavailable')
+      window.setTimeout(() => setPasteMessage(''), 1800)
+    }
+  }
 
   async function verifyKey() {
     if (!key.trim()) return
@@ -35,7 +67,7 @@ function App() {
     <nav className="topbar"><a className="brand" href="/"><span className="brand-mark"><ShieldCheck size={18} /></span>keycheck</a><div className="nav-meta"><span className="live-dot" /> all systems operational <span className="nav-divider" /> <span className="version">v1.0</span></div></nav>
     <section className="intro"><div className="eyebrow"><Sparkles size={14} /> API CREDENTIAL INSPECTOR</div><h1>Know your key.<br /><em>Before</em> you ship.</h1><p>Verify AI provider credentials in seconds. Your key is sent directly to the provider and never stored.</p></section>
     <section className="workspace">
-      <div className="verify-panel"><div className="panel-header"><div><span className="section-kicker">01 / PROVIDER</span><h2>Choose a provider</h2></div><span className="step-count">1 of 2</span></div><div className="provider-grid">{providers.map((item) => <button key={item.id} className={`provider ${provider === item.id ? 'selected' : ''}`} onClick={() => { setProvider(item.id); setResult(null) }} type="button"><span className={`provider-mark ${item.tone}`}>{item.mark}</span><span>{item.name}</span>{provider === item.id && <Check size={16} className="provider-check" />}</button>)}</div><div className="field-heading"><span className="section-kicker">02 / CREDENTIAL</span><span className="secure-label"><KeyRound size={13} /> encrypted in transit</span></div><div className="key-input"><KeyRound size={18} /><input aria-label="API key" type={showKey ? 'text' : 'password'} value={key} onChange={(event) => { setKey(event.target.value); setResult(null) }} onKeyDown={(event) => event.key === 'Enter' && verifyKey()} placeholder={selectedProvider.placeholder} autoComplete="off" /><button className="icon-button" type="button" onClick={() => setShowKey(!showKey)} aria-label={showKey ? 'Hide API key' : 'Show API key'}>{showKey ? <EyeOff size={18} /> : <Eye size={18} />}</button></div><button className="verify-button" type="button" disabled={!key.trim() || isChecking} onClick={verifyKey}>{isChecking ? <><LoaderCircle className="spin" size={18} /> verifying with {selectedProvider.name}...</> : <>Verify credential <ArrowUpRight size={18} /></>}</button><p className="no-store"><ShieldCheck size={14} /> We never log, store, or share your credentials.</p></div>
+      <div className="verify-panel"><div className="panel-header"><div><span className="section-kicker">01 / CREDENTIAL</span><h2>Enter your API key</h2></div><span className="step-count">1 of 2</span></div><div className="key-input"><KeyRound size={18} /><input aria-label="API key" type={showKey ? 'text' : 'password'} value={key} onChange={(event) => { const nextKey = event.target.value; setKey(nextKey); setResult(null); if (providerMode === 'auto') setProvider(detectProvider(nextKey) ?? 'openai') }} onKeyDown={(event) => event.key === 'Enter' && verifyKey()} placeholder="Paste or type your API key..." autoComplete="off" /><button className="paste-button" type="button" onClick={pasteKey}><Clipboard size={15} /> {pasteMessage || 'Paste'}</button><button className="icon-button" type="button" onClick={() => setShowKey(!showKey)} aria-label={showKey ? 'Hide API key' : 'Show API key'}>{showKey ? <EyeOff size={18} /> : <Eye size={18} />}</button></div><div className="detected-provider"><span className={detectedProvider ? 'detection-dot' : 'detection-dot muted'} /> {providerMode === 'auto' && detectedProvider ? <>Automatically selected <strong>{selectedProvider.name}</strong></> : providerMode === 'manual' ? <>Using <strong>{selectedProvider.name}</strong> (manual override)</> : 'Type a key to identify its provider'} {providerMode === 'manual' && <button type="button" onClick={() => { setProviderMode('auto'); setProvider(detectedProvider ?? 'openai') }}>Use auto-detection</button>}</div><div className="field-heading provider-heading"><span className="section-kicker">02 / PROVIDER</span><span className="secure-label"><ShieldCheck size={13} /> {providerMode === 'auto' ? 'auto-selected' : 'manual override'}</span></div><div className="provider-search"><Search size={16} /><input aria-label="Search providers" value={providerSearch} onChange={(event) => setProviderSearch(event.target.value)} placeholder="Search providers..." /></div><div className="provider-grid">{visibleProviders.map((item) => <button key={item.id} className={`provider ${provider === item.id ? 'selected' : ''}`} onClick={() => { setProvider(item.id); setProviderMode('manual'); setResult(null) }} type="button"><span className={`provider-mark ${item.tone}`}>{item.mark}</span><span>{item.name}</span>{provider === item.id && <Check size={16} className="provider-check" />}</button>)}</div><button className="verify-button" type="button" disabled={!key.trim() || isChecking} onClick={verifyKey}>{isChecking ? <><LoaderCircle className="spin" size={18} /> verifying with {selectedProvider.name}...</> : <>Verify credential <ArrowUpRight size={18} /></>}</button><p className="no-store"><ShieldCheck size={14} /> We never log, store, or share your credentials.</p></div>
       <aside className={`result-panel ${result ? `result-${result.status}` : ''}`}><div className="result-topline"><span className="section-kicker">VERIFICATION RESULT</span><Terminal size={16} /></div>{!result && <div className="empty-result"><div className="empty-icon"><KeyRound size={22} /></div><h3>Ready when you are</h3><p>Select a provider and enter a credential to begin your check.</p></div>}{result?.status === 'valid' && <div className="result-content"><div className="result-icon"><Check size={30} /></div><span className="result-label">CREDENTIAL VALID</span><h3>Your {selectedProvider.name} key is active.</h3><p>Authentication succeeded. This key can make requests to the {selectedProvider.name} API.</p><div className="result-meta"><span>RESPONSE TIME</span><strong>{result.latency}ms</strong></div><button className="reset-button" type="button" onClick={() => { setResult(null); setKey('') }}><RotateCcw size={15} /> Check another key</button></div>}{result?.status === 'invalid' && <div className="result-content"><div className="result-icon invalid"><CircleAlert size={30} /></div><span className="result-label">CREDENTIAL INVALID</span><h3>This key did not authenticate.</h3><p>{result.message}</p><button className="reset-button" type="button" onClick={() => setResult(null)}><RotateCcw size={15} /> Try again</button></div>}{result?.status === 'error' && <div className="result-content"><div className="result-icon error"><CircleAlert size={30} /></div><span className="result-label">CHECK FAILED</span><h3>We could not complete the check.</h3><p>{result.message}</p><button className="reset-button" type="button" onClick={verifyKey}><RotateCcw size={15} /> Retry check</button></div>}</aside>
     </section>
     <section className="console-panel"><div className="console-header"><div><span className="section-kicker">LIVE VERIFICATION TRACE</span><h2>What happens under the hood</h2></div><span className="console-status"><span className={isChecking ? 'console-pulse' : 'console-dot'} /> {isChecking ? 'running' : 'idle'}</span></div><div className="terminal-window"><div className="terminal-bar"><span className="terminal-lights"><i /><i /><i /></span><span>keycheck / session.log</span><span>UTF-8</span></div><div className="terminal-output" aria-live="polite">{logs.map((line, index) => <div key={`${line}-${index}`} className={line.includes('✓') ? 'log-success' : line.includes('×') || line.includes('!') ? 'log-error' : ''}><span className="line-number">{String(index + 1).padStart(2, '0')}</span><span>{line}</span>{isChecking && index === logs.length - 1 && <span className="cursor" />}</div>)}</div></div></section>

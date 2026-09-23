@@ -1,6 +1,6 @@
-export type Provider = 'openai' | 'anthropic' | 'google' | 'mistral' | 'groq' | 'cohere' | 'perplexity' | 'xai' | 'deepseek' | 'openrouter' | 'huggingface' | 'meta' | 'qwen' | 'zhipu' | 'moonshot' | 'baichuan' | 'minimax' | 'siliconflow' | 'together' | 'fireworks' | 'cerebras' | 'sambanova' | 'nvidia' | 'sarvam'
+export type Provider = 'openai' | 'anthropic' | 'google' | 'mistral' | 'groq' | 'cohere' | 'perplexity' | 'xai' | 'deepseek' | 'openrouter' | 'huggingface' | 'meta' | 'qwen' | 'zhipu' | 'moonshot' | 'baichuan' | 'minimax' | 'siliconflow' | 'together' | 'fireworks' | 'cerebras' | 'sambanova' | 'nvidia' | 'sarvam' | 'jev'
 
-const supportedProviders: Provider[] = ['openai', 'anthropic', 'google', 'mistral', 'groq', 'cohere', 'perplexity', 'xai', 'deepseek', 'openrouter', 'huggingface', 'meta', 'qwen', 'zhipu', 'moonshot', 'baichuan', 'minimax', 'siliconflow', 'together', 'fireworks', 'cerebras', 'sambanova', 'nvidia', 'sarvam']
+const supportedProviders: Provider[] = ['openai', 'anthropic', 'google', 'mistral', 'groq', 'cohere', 'perplexity', 'xai', 'deepseek', 'openrouter', 'huggingface', 'meta', 'qwen', 'zhipu', 'moonshot', 'baichuan', 'minimax', 'siliconflow', 'together', 'fireworks', 'cerebras', 'sambanova', 'nvidia', 'sarvam', 'jev']
 
 export function isProvider(value: unknown): value is Provider {
   return typeof value === 'string' && supportedProviders.includes(value as Provider)
@@ -32,6 +32,7 @@ export async function verifyWithProvider(provider: Provider, key: string) {
     sambanova: () => fetch('https://api.sambanova.ai/v1/models', { headers: { Authorization: `Bearer ${key}` } }),
     nvidia: () => fetch('https://integrate.api.nvidia.com/v1/models', { headers: { Authorization: `Bearer ${key}` } }),
     sarvam: () => fetch('https://api.sarvam.ai/models', { headers: { Authorization: `Bearer ${key}` } }),
+    jev: () => fetch('https://api.typesafe.ai/v1/models', { headers: { Authorization: `Bearer ${key}` } }),
   }
 
   const providerResponse = await requests[provider]()

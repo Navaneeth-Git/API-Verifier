@@ -1,6 +1,6 @@
-export type Provider = 'openai' | 'anthropic' | 'google' | 'mistral' | 'groq' | 'cohere' | 'perplexity' | 'xai' | 'deepseek' | 'openrouter' | 'huggingface'
+export type Provider = 'openai' | 'anthropic' | 'google' | 'mistral' | 'groq' | 'cohere' | 'perplexity' | 'xai' | 'deepseek' | 'openrouter' | 'huggingface' | 'meta' | 'qwen' | 'zhipu' | 'moonshot' | 'baichuan' | 'minimax' | 'siliconflow' | 'together' | 'fireworks' | 'cerebras' | 'sambanova' | 'nvidia' | 'sarvam'
 
-const supportedProviders: Provider[] = ['openai', 'anthropic', 'google', 'mistral', 'groq', 'cohere', 'perplexity', 'xai', 'deepseek', 'openrouter', 'huggingface']
+const supportedProviders: Provider[] = ['openai', 'anthropic', 'google', 'mistral', 'groq', 'cohere', 'perplexity', 'xai', 'deepseek', 'openrouter', 'huggingface', 'meta', 'qwen', 'zhipu', 'moonshot', 'baichuan', 'minimax', 'siliconflow', 'together', 'fireworks', 'cerebras', 'sambanova', 'nvidia', 'sarvam']
 
 export function isProvider(value: unknown): value is Provider {
   return typeof value === 'string' && supportedProviders.includes(value as Provider)
@@ -19,6 +19,19 @@ export async function verifyWithProvider(provider: Provider, key: string) {
     deepseek: () => fetch('https://api.deepseek.com/models', { headers: { Authorization: `Bearer ${key}` } }),
     openrouter: () => fetch('https://openrouter.ai/api/v1/models', { headers: { Authorization: `Bearer ${key}` } }),
     huggingface: () => fetch('https://huggingface.co/api/whoami-v2', { headers: { Authorization: `Bearer ${key}` } }),
+    meta: () => fetch(`https://graph.facebook.com/v23.0/me?access_token=${encodeURIComponent(key)}`),
+    qwen: () => fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/models', { headers: { Authorization: `Bearer ${key}` } }),
+    zhipu: () => fetch('https://open.bigmodel.cn/api/paas/v4/models', { headers: { Authorization: `Bearer ${key}` } }),
+    moonshot: () => fetch('https://api.moonshot.ai/v1/models', { headers: { Authorization: `Bearer ${key}` } }),
+    baichuan: () => fetch('https://api.baichuan-ai.com/v1/models', { headers: { Authorization: `Bearer ${key}` } }),
+    minimax: () => fetch('https://api.minimax.io/v1/models', { headers: { Authorization: `Bearer ${key}` } }),
+    siliconflow: () => fetch('https://api.siliconflow.cn/v1/models', { headers: { Authorization: `Bearer ${key}` } }),
+    together: () => fetch('https://api.together.xyz/v1/models', { headers: { Authorization: `Bearer ${key}` } }),
+    fireworks: () => fetch('https://api.fireworks.ai/inference/v1/models', { headers: { Authorization: `Bearer ${key}` } }),
+    cerebras: () => fetch('https://api.cerebras.ai/v1/models', { headers: { Authorization: `Bearer ${key}` } }),
+    sambanova: () => fetch('https://api.sambanova.ai/v1/models', { headers: { Authorization: `Bearer ${key}` } }),
+    nvidia: () => fetch('https://integrate.api.nvidia.com/v1/models', { headers: { Authorization: `Bearer ${key}` } }),
+    sarvam: () => fetch('https://api.sarvam.ai/models', { headers: { Authorization: `Bearer ${key}` } }),
   }
 
   const providerResponse = await requests[provider]()
